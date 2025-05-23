@@ -1,0 +1,70 @@
+# docker-compose.yml
+version: '3.8' # Specify the Docker Compose file format version
+
+services:
+  # Service for the PostgreSQL database
+  auth_db:
+    image: postgres:latest # Using the latest PostgreSQL image as requested
+    container_name: auth_db_container # Assign a readable name to the container
+    environment:
+      # Set PostgreSQL environment variables, matching your .env file
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      # Persist database data to a named volume. This ensures your data
+      # is not lost if the container is removed.
+      - auth_db_data:/var/lib/postgresql/data
+    ports:
+      # Optional: Expose the database port to your host machine.
+      # This allows you to connect to the database directly from your local machine
+      # (e.g., using a database client like DBeaver or pgAdmin).
+      - "5432:5432"
+    healthcheck:
+      # Define a healthcheck to ensure the database is ready before the app starts
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Service for your Node.js authentication application
+  auth_app:
+    image: reflective-auth-service # Use the image you just built
+    container_name: reflective_auth_service_app # Assign a readable name
+    ports:
+      # Map the application's internal port (3001) to the host machine's port (3001)
+      - "3001:3001"
+    environment:
+      # Pass environment variables to the application container.
+      # Crucially, the DATABASE_URL now points to the `auth_db` service name
+      # instead of `localhost`, as they are on the same Docker network.
+      DATABASE_URL: postgresql://postgres:postgres@auth_db:5432/auth_db
+      PORT: 3001
+      JWT_SECRET: your-super-secret-key-change-this-in-production # IMPORTANT: Change this in production
+      NODE_ENV: development
+      REQUIRE_EMAIL_VERIFICATION: "false"
+      COOKIE_SECURE: "false"
+      COOKIE_HTTP_ONLY: "true"
+      COOKIE_SAME_SITE: "lax"
+      # You can also use `env_file: ./.env` here if you prefer to load all variables
+      # from your .env file, but ensure DATABASE_URL is overridden if needed.
+    depends_on:
+      # Ensure the database service is healthy before starting the application service
+      auth_db:
+        condition: service_healthy
+    command: >
+      sh -c "npx prisma migrate deploy && npm start"
+      # This command first applies any pending Prisma database migrations
+      # (`npx prisma migrate deploy`) and then starts your Node.js application
+      # using the `npm start` script defined in your package.json.
+    volumes:
+      # Optional: Mount your local source code into the container.
+      # This is useful for development as changes on your host machine
+      # will be reflected inside the container without rebuilding the image.
+      # The second line prevents node_modules from being overwritten by the host's.
+      - .:/app
+      - /app/node_modules
+
+# Define named volumes for data persistence
+volumes:
+  auth_db_data: # This volume will store your PostgreSQL database files

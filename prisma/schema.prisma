@@ -1,0 +1,46 @@
+// Prisma schema definition for database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  username       String?   @unique
+  password       String
+  firstName      String?
+  lastName       String?
+  isVerified     Boolean   @default(false)
+  verifyToken    String?
+  resetToken     String?
+  resetExpires   DateTime?
+  refreshTokens  RefreshToken[]
+  role           UserRole  @default(USER)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  expires   DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
