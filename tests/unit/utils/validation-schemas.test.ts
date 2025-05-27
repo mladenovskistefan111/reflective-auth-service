@@ -1,10 +1,9 @@
-// tests/unit/utils/validation-schemas.test.ts
 import {
     registerSchema,
     loginSchema,
     forgotPasswordSchema,
     resetPasswordSchema,
-  } from '../../../src/utils/validation-schemas'; // Adjust path as needed
+  } from '../../../src/utils/validation-schemas'; 
   
   describe('validation-schemas', () => {
     describe('registerSchema', () => {

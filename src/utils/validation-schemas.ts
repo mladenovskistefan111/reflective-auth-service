@@ -1,8 +1,5 @@
 import Joi from 'joi';
 
-/**
- * Validation schema for user registration
- */
 export const registerSchema = Joi.object({
   email: Joi.string()
     .email()
@@ -42,9 +39,6 @@ export const registerSchema = Joi.object({
     .optional(),
 });
 
-/**
- * Validation schema for user login
- */
 export const loginSchema = Joi.object({
   email: Joi.string()
     .email()
@@ -61,9 +55,6 @@ export const loginSchema = Joi.object({
     }),
 });
 
-/**
- * Validation schema for password reset request
- */
 export const forgotPasswordSchema = Joi.object({
   email: Joi.string()
     .email()
@@ -74,9 +65,6 @@ export const forgotPasswordSchema = Joi.object({
     }),
 });
 
-/**
- * Validation schema for password reset
- */
 export const resetPasswordSchema = Joi.object({
   password: Joi.string()
     .min(8)

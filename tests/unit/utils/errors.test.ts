@@ -1,4 +1,3 @@
-// tests/unit/utils/errors.test.ts
 import { ApiError, NotFoundError, UnauthorizedError, ForbiddenError, ValidationError } from '../../../src/utils/errors';
 
 describe('Error classes', () => {
@@ -15,7 +14,7 @@ describe('Error classes', () => {
       expect(error.message).toBe(message);
       expect(error.statusCode).toBe(statusCode);
       expect(error.errors).toEqual(errors);
-      expect(error.name).toBe('Error'); // Default name from Error class
+      expect(error.name).toBe('Error');
     });
     
     it('should work without errors array', () => {
@@ -56,7 +55,6 @@ describe('Error classes', () => {
       expect(error.statusCode).toBe(404);
     });
 
-    // Test instanceof behavior to ensure prototype chain is correct
     it('should maintain instanceof behavior', () => {
       const error = new NotFoundError();
       function checkErrorType(err: any) {
@@ -86,7 +84,6 @@ describe('Error classes', () => {
       expect(error.statusCode).toBe(401);
     });
 
-    // Test instanceof behavior to ensure prototype chain is correct
     it('should maintain instanceof behavior', () => {
       const error = new UnauthorizedError();
       function checkErrorType(err: any) {
@@ -116,7 +113,6 @@ describe('Error classes', () => {
       expect(error.statusCode).toBe(403);
     });
 
-    // Test instanceof behavior to ensure prototype chain is correct
     it('should maintain instanceof behavior', () => {
       const error = new ForbiddenError();
       function checkErrorType(err: any) {
@@ -153,7 +149,6 @@ describe('Error classes', () => {
       expect(error.errors).toEqual(errors);
     });
 
-    // Test instanceof behavior to ensure prototype chain is correct
     it('should maintain instanceof behavior', () => {
       const error = new ValidationError();
       function checkErrorType(err: any) {
@@ -170,28 +165,24 @@ describe('Error classes', () => {
       const unauthorizedError = new UnauthorizedError();
       const forbiddenError = new ForbiddenError();
       const validationError = new ValidationError();
-      
-      // All should be instances of Error
+
       expect(apiError).toBeInstanceOf(Error);
       expect(notFoundError).toBeInstanceOf(Error);
       expect(unauthorizedError).toBeInstanceOf(Error);
       expect(forbiddenError).toBeInstanceOf(Error);
       expect(validationError).toBeInstanceOf(Error);
-      
-      // All should be instances of ApiError
+     
       expect(apiError).toBeInstanceOf(ApiError);
       expect(notFoundError).toBeInstanceOf(ApiError);
       expect(unauthorizedError).toBeInstanceOf(ApiError);
       expect(forbiddenError).toBeInstanceOf(ApiError);
       expect(validationError).toBeInstanceOf(ApiError);
-      
-      // Each should be instance of its own class
+
       expect(notFoundError).toBeInstanceOf(NotFoundError);
       expect(unauthorizedError).toBeInstanceOf(UnauthorizedError);
       expect(forbiddenError).toBeInstanceOf(ForbiddenError);
       expect(validationError).toBeInstanceOf(ValidationError);
-      
-      // Cross-checks should fail
+
       expect(notFoundError).not.toBeInstanceOf(UnauthorizedError);
       expect(unauthorizedError).not.toBeInstanceOf(NotFoundError);
       expect(forbiddenError).not.toBeInstanceOf(ValidationError);

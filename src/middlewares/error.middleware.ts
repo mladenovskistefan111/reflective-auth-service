@@ -7,46 +7,42 @@ const errorMiddleware: ErrorRequestHandler = (
   req: Request,
   res: Response,
   next: NextFunction
-): void => { // Explicitly declare return type as void
+): void => {
   logger.error(err);
 
-  // If it's our custom ApiError, use its status code and message
   if (err instanceof ApiError) {
-    res.status(err.statusCode).json({ // Removed return
+    res.status(err.statusCode).json({ 
       success: false,
       message: err.message,
       errors: err.errors
     });
-    return; // Explicitly return void
+    return; 
   }
 
-  // If it's a Prisma error, handle it specially
   if (err.name === 'PrismaClientKnownRequestError') {
-    res.status(400).json({ // Removed return
+    res.status(400).json({
       success: false,
       message: 'Database error occurred',
     });
-    return; // Explicitly return void
+    return; 
   }
 
-  // Handle validation errors from Joi
   if (err.name === 'ValidationError') {
-    res.status(400).json({ // Removed return
+    res.status(400).json({
       success: false,
       message: 'Validation error',
       errors: err.message
     });
-    return; // Explicitly return void
+    return;
   }
 
-  // Default error handling
-  res.status(500).json({ // Removed return
+  res.status(500).json({
     success: false,
     message: process.env.NODE_ENV === 'production'
       ? 'Internal server error'
       : err.message
   });
-  return; // Explicitly return void
+  return; 
 };
 
 export default errorMiddleware;

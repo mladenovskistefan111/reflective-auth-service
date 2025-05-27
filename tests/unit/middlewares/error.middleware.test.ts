@@ -1,10 +1,8 @@
-// tests/unit/middlewares/error.middleware.test.ts
 import { Request, Response, NextFunction } from 'express';
-import errorMiddleware from '../../../src/middlewares/error.middleware'; // Adjust path
-import { ApiError } from '../../../src/utils/errors'; // Import custom error
-import { logger } from '../../../src/utils/logger'; // Mock logger
+import errorMiddleware from '../../../src/middlewares/error.middleware';
+import { ApiError } from '../../../src/utils/errors'; 
+import { logger } from '../../../src/utils/logger'; 
 
-// Mock the logger to prevent actual console output during tests
 jest.mock('../../../src/utils/logger', () => ({
   logger: {
     error: jest.fn(),
@@ -21,11 +19,10 @@ describe('error.middleware', () => {
   beforeEach(() => {
     mockRequest = {};
     mockResponse = {
-      status: jest.fn().mockReturnThis(), // Allows chaining .status().json()
+      status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     };
     mockNext = jest.fn();
-    // Clear logger mock calls before each test
     (logger.error as jest.Mock).mockClear();
   });
 
@@ -44,14 +41,13 @@ describe('error.middleware', () => {
       message: 'User not found',
       errors: ['detail1', 'detail2'],
     });
-    expect(mockNext).not.toHaveBeenCalled(); // Middleware should terminate the request
+    expect(mockNext).not.toHaveBeenCalled();
   });
 
   it('should handle PrismaClientKnownRequestError correctly', () => {
-    // Mimic a Prisma error object
     const prismaError = new Error('P2002 Unique constraint failed on the fields: (`email`)');
     prismaError.name = 'PrismaClientKnownRequestError';
-    (prismaError as any).code = 'P2002'; // Add Prisma-specific code if needed for more detailed tests
+    (prismaError as any).code = 'P2002';
 
     errorMiddleware(prismaError, mockRequest as Request, mockResponse as Response, mockNext);
 
@@ -68,10 +64,9 @@ describe('error.middleware', () => {
   });
 
   it('should handle Joi ValidationError correctly', () => {
-    // Mimic a Joi validation error object
     const joiError = new Error('"email" must be a valid email');
     joiError.name = 'ValidationError';
-    (joiError as any).details = [{ path: ['email'], message: '"email" must be a valid email' }]; // Joi errors have a 'details' array
+    (joiError as any).details = [{ path: ['email'], message: '"email" must be a valid email' }];
 
     errorMiddleware(joiError, mockRequest as Request, mockResponse as Response, mockNext);
 
@@ -83,7 +78,7 @@ describe('error.middleware', () => {
     expect(mockResponse.json).toHaveBeenCalledWith({
       success: false,
       message: 'Validation error',
-      errors: joiError.message, // Your error.middleware uses err.message directly here
+      errors: joiError.message,
     });
     expect(mockNext).not.toHaveBeenCalled();
   });
@@ -101,15 +96,14 @@ describe('error.middleware', () => {
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
     expect(mockResponse.json).toHaveBeenCalledWith({
       success: false,
-      message: 'Internal server error', // Generic message in production
+      message: 'Internal server error',
     });
     expect(mockNext).not.toHaveBeenCalled();
-    // Reset env var
     process.env.NODE_ENV = 'test';
   });
 
   it('should handle generic errors in development environment', () => {
-    process.env.NODE_ENV = 'development'; // Or 'test'
+    process.env.NODE_ENV = 'development'; 
     const genericError = new Error('Detailed internal server error message for dev');
     
     errorMiddleware(genericError, mockRequest as Request, mockResponse as Response, mockNext);
@@ -121,10 +115,9 @@ describe('error.middleware', () => {
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
     expect(mockResponse.json).toHaveBeenCalledWith({
       success: false,
-      message: 'Detailed internal server error message for dev', // Detailed message in dev
+      message: 'Detailed internal server error message for dev',
     });
     expect(mockNext).not.toHaveBeenCalled();
-    // Reset env var
     process.env.NODE_ENV = 'test';
   });
 });

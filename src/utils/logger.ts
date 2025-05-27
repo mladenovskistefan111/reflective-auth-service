@@ -1,6 +1,5 @@
 import pino from 'pino';
 
-// Configure the logger
 export const logger = pino({
   transport: {
     target: 'pino-pretty',

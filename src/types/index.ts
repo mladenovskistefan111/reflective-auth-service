@@ -1,6 +1,3 @@
-// Common type definitions for the application
-
-// JWT payload structure
 export interface JwtPayload {
     id: number;
     email: string;
@@ -8,7 +5,6 @@ export interface JwtPayload {
     [key: string]: any;
   }
   
-  // Authentication request types
   export interface RegisterRequest {
     email: string;
     password: string;
@@ -22,7 +18,6 @@ export interface JwtPayload {
     password: string;
   }
   
-  // Authentication response types
   export interface AuthResponse {
     accessToken: string;
     refreshToken: string;

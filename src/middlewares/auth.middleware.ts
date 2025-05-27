@@ -3,11 +3,7 @@ import { verifyJwt } from '../utils/jwt';
 import { ApiError } from '../utils/errors';
 
 
-/**
- * Middleware to verify JWT token and attach user to request
- */
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  // Get token from header
   const authHeader = req.headers.authorization;
   
   if (!authHeader?.startsWith('Bearer ')) {
@@ -17,10 +13,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   const token = authHeader.split(' ')[1];
   
   try {
-    // Verify token
     const decoded = verifyJwt(token);
-    
-    // Attach user to request
     req.user = decoded;
     
     next();
@@ -29,9 +22,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-/**
- * Middleware to check user roles
- */
 export const authorize = (roles: string[] = []) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {

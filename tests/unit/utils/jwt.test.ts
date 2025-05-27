@@ -1,9 +1,7 @@
-// tests/unit/utils/jwt.test.ts
-import { generateJwt, verifyJwt } from '../../../src/utils/jwt'; // Adjust path if needed
-import { ApiError } from '../../../src/utils/errors'; // Ensure this path is correct
+import { generateJwt, verifyJwt } from '../../../src/utils/jwt';
+import { ApiError } from '../../../src/utils/errors';
 import jwt from 'jsonwebtoken';
 
-// Mock jsonwebtoken module to be able to trigger specific errors
 jest.mock('jsonwebtoken', () => {
   const originalModule = jest.requireActual('jsonwebtoken');
   return {
@@ -21,23 +19,19 @@ describe('jwt utility functions', () => {
     email: 'test@example.com',
     role: 'USER',
   };
-  const secret = 'supersecretjwtkeyforunitests'; // Use a consistent secret for tests
+  const secret = 'supersecretjwtkeyforunitests';
 
-  // Set up a mock environment variable for JWT_SECRET
   beforeAll(() => {
     process.env.JWT_SECRET = secret;
   });
 
   afterAll(() => {
-    // Clean up the mock environment variable
     delete process.env.JWT_SECRET;
   });
 
-  // Reset the environment and mocks between tests to ensure isolation
   afterEach(() => {
     process.env.JWT_SECRET = secret;
     jest.clearAllMocks();
-    // Reset verify to use the real implementation by default
     (jwt.verify as jest.Mock).mockImplementation((token, secret, options) => {
       return jest.requireActual('jsonwebtoken').verify(token, secret, options);
     });
@@ -52,20 +46,19 @@ describe('jwt utility functions', () => {
 
     it('should include the correct payload in the generated token', () => {
       const token = generateJwt(mockPayload);
-      const decoded = jwt.verify(token, secret) as typeof mockPayload; // Decode without verifying expiration
+      const decoded = jwt.verify(token, secret) as typeof mockPayload;
       expect(decoded.id).toBe(mockPayload.id);
       expect(decoded.email).toBe(mockPayload.email);
       expect(decoded.role).toBe(mockPayload.role);
     });
 
     it('should throw an error if JWT_SECRET is not defined', () => {
-      // Temporarily unset
-      delete process.env.JWT_SECRET; 
+      delete process.env.JWT_SECRET;
       expect(() => generateJwt(mockPayload)).toThrow('JWT_SECRET is not defined in environment variables');
     });
 
     it('should generate a token with a specified expiration', () => {
-      const token = generateJwt(mockPayload, '1s'); // Short expiry for testing
+      const token = generateJwt(mockPayload, '1s');
       const decoded = jwt.decode(token) as jwt.JwtPayload;
       expect(decoded.exp).toBeDefined();
     });
@@ -79,10 +72,8 @@ describe('jwt utility functions', () => {
     });
 
     it('should throw ApiError with 401 for an expired token', async () => {
-      // Generate a token that expires immediately
       const expiredToken = generateJwt(mockPayload, '1ms');
 
-      // Wait a bit to ensure it expires
       await new Promise(resolve => setTimeout(resolve, 50));
 
       expect(() => verifyJwt(expiredToken)).toThrow(new ApiError(401, 'Token expired'));
@@ -100,18 +91,14 @@ describe('jwt utility functions', () => {
     });
 
     it('should throw an error if JWT_SECRET is not defined', () => {
-      // First create a token with the secret defined
       const token = jwt.sign(mockPayload, secret, { expiresIn: '1h' });
-      
-      // Then delete the secret before verification
+
       delete process.env.JWT_SECRET;
-      
-      // Now verify the token should throw the expected error
+
       expect(() => verifyJwt(token)).toThrow('JWT_SECRET is not defined in environment variables');
     });
 
     it('should rethrow unknown errors from jwt.verify', () => {
-      // Mock jwt.verify to throw a custom error (not TokenExpiredError or JsonWebTokenError)
       const customError = new Error('Unknown JWT error');
       (jwt.verify as jest.Mock).mockImplementation(() => {
         throw customError;

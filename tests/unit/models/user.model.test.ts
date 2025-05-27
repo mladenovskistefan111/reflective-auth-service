@@ -1,6 +1,5 @@
-// tests/unit/models/user.model.test.ts
-import { toUserResponse, UserResponse } from '../../../src/models/user.model'; // Adjust path as needed
-import { User as PrismaUser } from '@prisma/client'; // Import PrismaUser type for mocking
+import { toUserResponse, UserResponse } from '../../../src/models/user.model'; 
+import { User as PrismaUser } from '@prisma/client';
 
 describe('user.model.ts', () => {
   describe('toUserResponse', () => {
@@ -8,21 +7,18 @@ describe('user.model.ts', () => {
       const mockPrismaUser: PrismaUser = {
         id: 1,
         email: 'test@example.com',
-        password: 'hashedpassword123', // Sensitive field
+        password: 'hashedpassword123', 
         username: 'testuser',
         firstName: 'John',
         lastName: 'Doe',
         role: 'USER',
         isVerified: true,
-        // phone: null, // Removed as per your schema.prisma update and regeneration
-        lastLoginAt: null, // Still required by PrismaUser type if in schema.prisma
-        verifyToken: 'someVerifyToken', // Sensitive field
-        resetToken: 'someResetToken',   // Sensitive field
-        resetExpires: new Date(),       // Sensitive field
+        lastLoginAt: null,
+        verifyToken: 'someVerifyToken', 
+        resetToken: 'someResetToken',   
+        resetExpires: new Date(),      
         createdAt: new Date('2023-01-01T10:00:00Z'),
         updatedAt: new Date('2023-01-01T10:00:00Z'),
-        // Add other required PrismaUser properties if any are missing from your schema.prisma
-        // e.g., refreshTokens: [] if it's a relation field
       };
 
       const expectedUserResponse: UserResponse = {
@@ -33,26 +29,19 @@ describe('user.model.ts', () => {
         lastName: 'Doe',
         role: 'USER',
         isVerified: true,
-        // phone: null, // Removed from expected response
-        // lastLoginAt: null, // Removed from expected response as it will be omitted by toUserResponse
         createdAt: mockPrismaUser.createdAt,
         updatedAt: mockPrismaUser.updatedAt,
       };
 
-      // Simulating the toUserResponse function's behavior
-      // In your actual src/models/user.model.ts, you need to update toUserResponse like this:
-      // const { password, verifyToken, resetToken, resetExpires, lastLoginAt, ...safeUser } = user;
       const { password, verifyToken, resetToken, resetExpires, lastLoginAt, ...safeUser } = mockPrismaUser;
       const result = safeUser as UserResponse;
 
-      // Expect the sensitive fields to be absent
       expect(result).not.toHaveProperty('password');
       expect(result).not.toHaveProperty('verifyToken');
       expect(result).not.toHaveProperty('resetToken');
       expect(result).not.toHaveProperty('resetExpires');
-      expect(result).not.toHaveProperty('lastLoginAt'); // Added expectation for lastLoginAt omission
+      expect(result).not.toHaveProperty('lastLoginAt'); 
 
-      // Expect the remaining fields to match the expected UserResponse
       expect(result).toEqual(expectedUserResponse);
     });
 
@@ -66,15 +55,12 @@ describe('user.model.ts', () => {
         lastName: null,
         role: 'USER',
         isVerified: false,
-        // phone: null, // Removed as per your schema.prisma update and regeneration
-        lastLoginAt: null, // Still required by PrismaUser type if in schema.prisma
+        lastLoginAt: null, 
         verifyToken: null,
         resetToken: null,
         resetExpires: null,
         createdAt: new Date('2023-02-01T11:00:00Z'),
         updatedAt: new Date('2023-02-01T11:00:00Z'),
-        // Add other required PrismaUser properties if any are missing from your schema.prisma
-        // e.g., refreshTokens: [] if it's a relation field
       };
 
       const expectedUserResponse: UserResponse = {
@@ -85,13 +71,10 @@ describe('user.model.ts', () => {
         lastName: null,
         role: 'USER',
         isVerified: false,
-        // phone: null, // Removed from expected response
-        // lastLoginAt: null, // Removed from expected response
         createdAt: mockPrismaUser.createdAt,
         updatedAt: mockPrismaUser.updatedAt,
       };
 
-      // Simulating the toUserResponse function's behavior
       const { password, verifyToken, resetToken, resetExpires, lastLoginAt, ...safeUser } = mockPrismaUser;
       const result = safeUser as UserResponse;
 

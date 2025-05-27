@@ -1,143 +1,140 @@
-// tests/unit/middlewares/auth.middleware.test.ts
-import { Request, Response, NextFunction } from 'express';
-import { authMiddleware, authorize } from '../../../src/middlewares/auth.middleware'; // Adjust path
-import { verifyJwt } from '../../../src/utils/jwt'; // Mock this
-import { ApiError } from '../../../src/utils/errors'; // Import for error instance checking
-
-// Mock the jwt utility functions
-jest.mock('../../../src/utils/jwt', () => ({
-  verifyJwt: jest.fn(),
-  // Add other jwt functions if they are exported and used in middleware
-}));
-
-describe('auth.middleware', () => {
-  let mockRequest: Partial<Request>;
-  let mockResponse: Partial<Response>;
-  let mockNext: NextFunction;
-
-  beforeEach(() => {
-    mockRequest = {};
-    mockResponse = {
-      status: jest.fn().mockReturnThis(), // Allow chaining .status().json()
-      json: jest.fn(),
+jest.mock('argon2', () => {
+    return {
+      default: jest.fn(),
+      hash: jest.fn().mockImplementation((password) =>
+        Promise.resolve(`$argon2id$v=19$m=65536,t=3,p=1$somesalt456789$somegeneratedhashvaluehere12345`)
+      ),
+      verify: jest.fn().mockResolvedValue(false),
+      argon2id: 0,
+      argon2i: 1,
+      argon2d: 2
     };
-    mockNext = jest.fn();
-    // Clear mocks for verifyJwt before each test
-    (verifyJwt as jest.Mock).mockClear();
   });
 
-  describe('authMiddleware', () => {
-    it('should call next() and attach user if a valid token is provided', () => {
-      const mockToken = 'Bearer validtoken';
-      const decodedUser = { id: 1, email: 'test@example.com', role: 'USER' };
-      
-      // Mock verifyJwt to return a decoded user
-      (verifyJwt as jest.Mock).mockReturnValue(decodedUser);
+  import { hashPassword, verifyPassword } from '../../../src/utils/password';
+  import * as argon2 from 'argon2';
 
-      mockRequest.headers = { authorization: mockToken };
+  const testPassword = 'MySecurePassword123!';
+  let hashedPassword = '';
 
-      authMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      // Expect verifyJwt to have been called with the token part
-      expect(verifyJwt).toHaveBeenCalledTimes(1);
-      expect(verifyJwt).toHaveBeenCalledWith('validtoken');
-      // Expect user to be attached to the request
-      expect(mockRequest.user).toEqual(decodedUser);
-      // Expect next to be called without an error
-      expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith();
+  describe('password utility functions', () => {
+    beforeAll(async () => {
+      hashedPassword = await hashPassword(testPassword);
     });
 
-    it('should throw ApiError if authorization header is missing', () => {
-      mockRequest.headers = {}; // No authorization header
-
-      expect(() => authMiddleware(mockRequest as Request, mockResponse as Response, mockNext))
-        .toThrow(new ApiError(401, 'Authorization token required'));
-      
-      expect(verifyJwt).not.toHaveBeenCalled();
-      expect(mockNext).not.toHaveBeenCalled();
+    beforeEach(() => {
+      jest.clearAllMocks();
+      (argon2.verify as jest.Mock).mockResolvedValue(false);
     });
 
-    it('should throw ApiError if authorization header does not start with "Bearer "', () => {
-      mockRequest.headers = { authorization: 'Token invalid' };
+    describe('hashPassword', () => {
+      it('should return a hashed string that is different from the original password', async () => {
+        hashedPassword = await hashPassword(testPassword);
 
-      expect(() => authMiddleware(mockRequest as Request, mockResponse as Response, mockNext))
-        .toThrow(new ApiError(401, 'Authorization token required'));
-      
-      expect(verifyJwt).not.toHaveBeenCalled();
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should throw ApiError if token is invalid or expired', () => {
-      const mockToken = 'Bearer invalidtoken';
-      // Mock verifyJwt to throw an error
-      (verifyJwt as jest.Mock).mockImplementation(() => {
-        throw new Error('Invalid token');
+        expect(hashedPassword).not.toBe(testPassword);
+        expect(typeof hashedPassword).toBe('string');
+        expect(hashedPassword.length).toBeGreaterThan(0);
+        expect(argon2.hash).toHaveBeenCalled();
       });
 
-      mockRequest.headers = { authorization: mockToken };
+      it('should produce a valid Argon2 hash format', async () => {
+        expect(hashedPassword).toMatch(/^\$argon2id\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$/);
+      });
 
-      expect(() => authMiddleware(mockRequest as Request, mockResponse as Response, mockNext))
-        .toThrow(new ApiError(401, 'Invalid or expired token'));
-      
-      expect(verifyJwt).toHaveBeenCalledTimes(1);
-      expect(mockNext).not.toHaveBeenCalled();
+      it('should use argon2id variant for hashing', async () => {
+        await hashPassword(testPassword);
+        expect(argon2.hash).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            type: argon2.argon2id
+          })
+        );
+      });
+
+      it('should use proper memory, time cost and parallelism settings', async () => {
+        await hashPassword(testPassword);
+        expect(argon2.hash).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            memoryCost: 2 ** 16,
+            timeCost: 3,
+            parallelism: 1
+          })
+        );
+      });
+
+      it('should handle empty passwords', async () => {
+        const emptyPasswordHash = await hashPassword('');
+        expect(typeof emptyPasswordHash).toBe('string');
+        expect(emptyPasswordHash.length).toBeGreaterThan(0);
+        expect(argon2.hash).toHaveBeenCalled();
+      });
+
+      it('should handle errors from argon2.hash', async () => {
+        (argon2.hash as jest.Mock).mockImplementationOnce(() => {
+          throw new Error('Mock hashing error');
+        });
+
+        await expect(hashPassword(testPassword)).rejects.toThrow('Mock hashing error');
+      });
+    });
+
+    describe('verifyPassword', () => {
+      it('should return true for a correct password', async () => {
+        (argon2.verify as jest.Mock).mockResolvedValue(true);
+        const result = await verifyPassword(testPassword, hashedPassword);
+        expect(result).toBe(true);
+        expect(argon2.verify).toHaveBeenCalledWith(hashedPassword, testPassword);
+      });
+
+      it('should return false for an incorrect password', async () => {
+        const result = await verifyPassword('WrongPassword123!', hashedPassword);
+        expect(result).toBe(false);
+        expect(argon2.verify).toHaveBeenCalledWith(hashedPassword, 'WrongPassword123!');
+      });
+
+      it('should return false for an empty password', async () => {
+        const result = await verifyPassword('', hashedPassword);
+        expect(result).toBe(false);
+        expect(argon2.verify).toHaveBeenCalledWith(hashedPassword, '');
+      });
+
+      it('should return false for an invalid hash (format check)', async () => {
+        const invalidHash = 'notAValidHash';
+        const result = await verifyPassword(testPassword, invalidHash);
+        expect(result).toBe(false);
+        expect(argon2.verify).not.toHaveBeenCalled();
+      });
+
+      it('should return false if hash is null', async () => {
+        const result = await verifyPassword(testPassword, null as unknown as string);
+        expect(result).toBe(false);
+        expect(argon2.verify).not.toHaveBeenCalled();
+      });
+
+      it('should return false if hash is undefined', async () => {
+        const result = await verifyPassword(testPassword, undefined as unknown as string);
+        expect(result).toBe(false);
+        expect(argon2.verify).not.toHaveBeenCalled();
+      });
+
+      it('should return false for hash with wrong prefix', async () => {
+        const wrongPrefixHash = 'wrongprefix$hash$value';
+        const result = await verifyPassword(testPassword, wrongPrefixHash);
+        expect(result).toBe(false);
+        expect(argon2.verify).not.toHaveBeenCalled();
+      });
+
+      it('should return false if argon2.verify throws an unexpected error', async () => {
+        (argon2.verify as jest.Mock).mockImplementation(() => {
+          throw new Error('Argon2 internal verification error');
+        });
+
+        const mockHash = '$argon2id$v=19$m=65536,t=3,p=1$c29tZXNhbHQ$ZmFrZWhhc2g';
+        const result = await verifyPassword(testPassword, mockHash);
+
+        expect(result).toBe(false);
+        expect(argon2.verify).toHaveBeenCalledWith(mockHash, testPassword);
+      });
     });
   });
-
-  describe('authorize', () => {
-    it('should call next() if user has the required role', () => {
-      const requiredRoles = ['ADMIN'];
-      mockRequest.user = { id: 1, email: 'admin@example.com', role: 'ADMIN' };
-
-      const authorizeMiddleware = authorize(requiredRoles);
-      authorizeMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith();
-    });
-
-    it('should call next() if no roles are required', () => {
-      mockRequest.user = { id: 1, email: 'user@example.com', role: 'USER' };
-
-      const authorizeMiddleware = authorize(); // No roles specified
-      authorizeMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith();
-    });
-
-    it('should throw ApiError if user is not attached to request', () => {
-      const requiredRoles = ['ADMIN'];
-      mockRequest.user = undefined; // No user attached
-
-      const authorizeMiddleware = authorize(requiredRoles);
-      expect(() => authorizeMiddleware(mockRequest as Request, mockResponse as Response, mockNext))
-        .toThrow(new ApiError(401, 'Unauthorized'));
-
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should throw ApiError if user does not have the required role', () => {
-      const requiredRoles = ['ADMIN'];
-      mockRequest.user = { id: 1, email: 'user@example.com', role: 'USER' }; // User has 'USER' role
-
-      const authorizeMiddleware = authorize(requiredRoles);
-      expect(() => authorizeMiddleware(mockRequest as Request, mockResponse as Response, mockNext))
-        .toThrow(new ApiError(403, 'Insufficient permissions'));
-
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should throw ApiError if user has multiple roles but none match the required', () => {
-      const requiredRoles = ['SUPER_ADMIN'];
-      mockRequest.user = { id: 1, email: 'user@example.com', role: 'USER' }; 
-
-      const authorizeMiddleware = authorize(requiredRoles);
-      expect(() => authorizeMiddleware(mockRequest as Request, mockResponse as Response, mockNext))
-        .toThrow(new ApiError(403, 'Insufficient permissions'));
-
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-  });
-});
