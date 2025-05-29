@@ -7,9 +7,6 @@ import { logger } from '../utils/logger.js';
 import { instrumentedPrisma } from '../config/database.js';
 import { recordAuthAttempt } from '../observability.js';
 
-// Remove the old PrismaClient import - we're using instrumentedPrisma now
-// const prisma = new PrismaClient(); // DELETE THIS LINE
-
 interface RegisterData {
   email: string;
   password: string;

@@ -1,4 +1,4 @@
-# Reflective Authorization Service for TechCart
+# Reflective Authorization Service
 
 ---
 
