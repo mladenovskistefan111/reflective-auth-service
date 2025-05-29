@@ -4,14 +4,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { Server } from 'http';
 
 dotenv.config();
 
-import routes from './routes';
-
-import errorMiddleware from './middlewares/error.middleware';
-import { logger } from './utils/logger';
+import routes from './routes/index.js';
+import errorMiddleware from './middlewares/error.middleware.js';
 
 const app = express();
 
@@ -28,17 +25,4 @@ app.get('/health', (req, res) => {
 
 app.use(errorMiddleware);
 
-const PORT = process.env.PORT || 3001;
-let server: Server;
-
-if (process.env.NODE_ENV !== 'test') {
-  server = app.listen(PORT, () => {
-    logger.info(`Auth service running on port ${PORT}`);
-  });
-} else {
-  server = {} as Server;
-}
-
-
 export default app;
-export { server };

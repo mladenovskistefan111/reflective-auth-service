@@ -1,9 +1,9 @@
 import express from 'express';
-import authController from '../controllers/auth.controller';
-import { validate } from '../middlewares/validation.middleware';
-import { authMiddleware } from '../middlewares/auth.middleware';
-import { registerSchema, loginSchema } from '../utils/validation-schemas';
-import { catchAsync } from '../utils/catchAsync'; // Import catchAsync
+import authController from '../controllers/auth.controller.js';
+import { validate } from '../middlewares/validation.middleware.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { registerSchema, loginSchema } from '../utils/validation-schemas.js';
+import { catchAsync } from '../utils/catchAsync.js'; 
 
 const router = express.Router();
 

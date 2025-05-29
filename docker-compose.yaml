@@ -1,0 +1,74 @@
+services:
+  auth_db:
+    image: postgres:latest
+    container_name: auth_db_container
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger_ui_container
+    ports:
+      - "16686:16686" 
+      - "4317:4317"   
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:16686/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  otel_collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel_collector_container
+    command: ["--config=/etc/otelcol-contrib/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/otel-collector-config.yaml
+    ports:
+      - "4318:4318"    
+      - "8888:8888"    
+      - "13133:13133"  
+    depends_on:
+      jaeger:
+        condition: service_healthy
+
+  auth_app:
+    image: reflective-auth-service
+    container_name: reflective_auth_service_app
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@auth_db:5432/auth_db
+      PORT: 3001
+      JWT_SECRET: "your_super_secret_jwt_key_here"
+      NODE_ENV: "development"
+      
+      REQUIRE_EMAIL_VERIFICATION: "false"
+      COOKIE_SECURE: "false"
+      COOKIE_HTTP_ONLY: "true"
+      COOKIE_SAME_SITE: "lax"
+
+      OTEL_COLLECTOR_HOST: otel_collector
+      OTEL_COLLECTOR_PORT_HTTP: 4318
+      
+    depends_on:
+      auth_db:
+        condition: service_healthy
+      otel_collector:
+        condition: service_started
+    restart: on-failure
+
+volumes:
+  auth_db_data:

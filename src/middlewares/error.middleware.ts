@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
-import { ApiError } from '../utils/errors';
-import { logger } from '../utils/logger';
+import { ApiError } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 
 const errorMiddleware: ErrorRequestHandler = (
   err: Error,

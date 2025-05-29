@@ -1,7 +1,7 @@
-import authService from '../services/auth.service';
+import authService from '../services/auth.service.js';
 import { Request, Response } from 'express';
-import { logger } from '../utils/logger';
-import { ApiError } from '../utils/errors';
+import { logger } from '../utils/logger.js';
+import { ApiError } from '../utils/errors.js';
 
 const authController = {
   async register(req: Request, res: Response) {

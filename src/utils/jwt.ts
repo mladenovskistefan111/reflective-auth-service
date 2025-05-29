@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { ApiError } from './errors';
+import { ApiError } from './errors.js';
 
 interface JwtPayload {
   id: number;

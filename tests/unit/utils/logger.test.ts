@@ -1,6 +1,18 @@
-import pino from 'pino';
+import { jest } from '@jest/globals';
 
-const mockPinoConstructor = jest.fn((options) => {
+interface PinoOptions {
+  transport?: {
+    target: string;
+    options?: {
+      colorize?: boolean;
+      translateTime?: string;
+      ignore?: string;
+    };
+  };
+  level?: string;
+}
+
+const mockPinoConstructor = jest.fn((options: PinoOptions) => {
   return {
     info: jest.fn(),
     debug: jest.fn(),
@@ -17,7 +29,10 @@ const mockPinoConstructor = jest.fn((options) => {
   };
 });
 
-jest.mock('pino', () => mockPinoConstructor);
+jest.mock('pino', () => ({
+  pino: mockPinoConstructor,
+  default: mockPinoConstructor
+}));
 
 describe('logger', () => {
   beforeEach(() => {
@@ -26,11 +41,11 @@ describe('logger', () => {
     jest.resetModules();
   });
 
-  it('should be configured with pino-pretty transport', () => {
-    const { logger } = require('../../../src/utils/logger');
+  it('should be configured with pino-pretty transport', async () => {
+    const { logger } = await import('../../../src/utils/logger.js');
 
     expect(mockPinoConstructor).toHaveBeenCalledTimes(1);
-    const config = mockPinoConstructor.mock.calls[0][0];
+    const config = mockPinoConstructor.mock.calls[0][0] as PinoOptions;
 
     expect(config).toHaveProperty('transport');
     expect(config.transport!).toHaveProperty('target', 'pino-pretty');
@@ -44,21 +59,21 @@ describe('logger', () => {
     );
   });
 
-  it('should set level to "debug" in development/test environment', () => {
+  it('should set level to "debug" in development/test environment', async () => {
     process.env.NODE_ENV = 'development';
     jest.resetModules();
-    const { logger } = require('../../../src/utils/logger');
+    const { logger } = await import('../../../src/utils/logger.js');
 
-    const config = mockPinoConstructor.mock.calls[0][0];
+    const config = mockPinoConstructor.mock.calls[0][0] as PinoOptions;
     expect(config.level).toBe('debug');
   });
 
-  it('should set level to "info" in production environment', () => {
+  it('should set level to "info" in production environment', async () => {
     process.env.NODE_ENV = 'production';
     jest.resetModules();
-    const { logger } = require('../../../src/utils/logger');
+    const { logger } = await import('../../../src/utils/logger.js');
 
-    const config = mockPinoConstructor.mock.calls[0][0];
+    const config = mockPinoConstructor.mock.calls[0][0] as PinoOptions;
     expect(config.level).toBe('info');
   });
 });
