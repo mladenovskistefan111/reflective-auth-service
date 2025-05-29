@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "module": "Node16", // or "NodeNext", "esnext", "es2022"
-    "moduleResolution": "Node16", // <--- Make sure this is also Node16 or NodeNext
-    "isolatedModules": true,     // <--- Crucial. You confirmed this is there.
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "isolatedModules": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -12,12 +12,15 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "sourceMap": true,
-    "rootDir": "./src", // Ensure this is correct
-    "outDir": "./dist"  // Ensure this is correct
+    "rootDir": "./src",
+    "outDir": "./dist"
   },
   "include": [
-    "src/**/*.ts",
-    "tests/**/*.ts" // <--- Make sure your test files are included
+    "src/**/*.ts" 
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests" 
+  ]
 }
