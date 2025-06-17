@@ -84,7 +84,6 @@ export const instrumentedPrisma = new Proxy(prisma, {
       return new Proxy(original, {
         get(modelTarget: any, modelProp: string) {
           const modelOriginal = modelTarget[modelProp];
-
           if (typeof modelOriginal === 'function') {
             return (...args: any[]) =>
               withDatabaseSpan(
@@ -96,7 +95,6 @@ export const instrumentedPrisma = new Proxy(prisma, {
                 }
               );
           }
-
           return modelOriginal;
         },
       });
@@ -104,6 +102,6 @@ export const instrumentedPrisma = new Proxy(prisma, {
 
     return original;
   },
-}) as typeof prisma;
+});
 
 export { prisma, testConnection };
