@@ -13,10 +13,11 @@ export const verifyPassword = async (password: string, hash: string): Promise<bo
   if (!hash || typeof hash !== 'string' || !hash.startsWith('$argon2')) {
     return false;
   }
-  
+
   try {
     return await argon2.verify(hash, password);
   } catch (error) {
+    console.error('Error verifying password:', error); // Log the error for debugging purposes
     return false;
   }
 };

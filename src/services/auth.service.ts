@@ -1,5 +1,5 @@
 import { User } from '@prisma/client';
-import { generateJwt, verifyJwt } from '../utils/jwt.js';
+import { generateJwt } from '../utils/jwt.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiError } from '../utils/errors.js';

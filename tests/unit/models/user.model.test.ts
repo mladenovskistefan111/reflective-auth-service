@@ -1,4 +1,4 @@
-import { toUserResponse, UserResponse } from '../../../src/models/user.model'; 
+import { UserResponse } from '../../../src/models/user.model'; 
 import { User as PrismaUser } from '@prisma/client';
 
 describe('user.model.ts', () => {
