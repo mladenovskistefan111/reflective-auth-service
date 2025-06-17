@@ -42,7 +42,7 @@ describe('logger', () => {
   });
 
   it('should be configured with pino-pretty transport', async () => {
-    const { logger } = await import('../../../src/utils/logger.js');
+    await import('../../../src/utils/logger.js');
 
     expect(mockPinoConstructor).toHaveBeenCalledTimes(1);
     const config = mockPinoConstructor.mock.calls[0][0] as PinoOptions;
@@ -62,7 +62,7 @@ describe('logger', () => {
   it('should set level to "debug" in development/test environment', async () => {
     process.env.NODE_ENV = 'development';
     jest.resetModules();
-    const { logger } = await import('../../../src/utils/logger.js');
+    await import('../../../src/utils/logger.js');
 
     const config = mockPinoConstructor.mock.calls[0][0] as PinoOptions;
     expect(config.level).toBe('debug');
@@ -71,7 +71,7 @@ describe('logger', () => {
   it('should set level to "info" in production environment', async () => {
     process.env.NODE_ENV = 'production';
     jest.resetModules();
-    const { logger } = await import('../../../src/utils/logger.js');
+    await import('../../../src/utils/logger.js');
 
     const config = mockPinoConstructor.mock.calls[0][0] as PinoOptions;
     expect(config.level).toBe('info');
